@@ -10,6 +10,27 @@ class Point(object):
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+
+class Line(object):
+
+    def __init__(self, k, b, left_x, right_x, step=0.01):
+        self.k = k
+        self.b = b
+        self.left_x = left_x
+        self.right_x = right_x
+        self.step = step
+
+    @property
+    def points(self):
+        result = []
+        for x in np.arange(self.left_x, self.right_x, self.step):
+            y = self.k * x + self.b
+            result.append(Point(x, y))
+        return result
+
 
 class Ellipse(object):
 
@@ -54,3 +75,29 @@ class Oval(Ellipse):
             y = (p.y + self.b + self.offset_y) ** self.power
             power_points.append(Point(x, y))
         return power_points
+
+    def derivative(self, a1, a2, c1, c2):
+        return (a1.y + a2.y - c1.y - c2.y) / (a1.x + a2.x - c1.x - c2.x)
+
+    def get_tangent_points(self, point, left_power=0, right_power=0):
+        l1 = l2 = r1 = r2 = None
+        for i, p in enumerate(self.points):
+            if p == point:
+                import logging
+                logging.info(self.points[i-2:i+3])
+                l1, l2, p, r1, r2 = self.points[i-2:i+3]
+        if l1 is None:
+            raise Exception('Point %s was not found!', point)
+        k = self.derivative(l1, l2, r1, r2)
+        b = point.y - point.x * k
+        left_x = self.min_x - self.min_x * left_power
+        right_x = self.max_x + self.max_x * right_power
+        return Line(k, b, left_x, right_x).points
+
+    @property
+    def min_x(self):
+        return min([p.x for p in self.points])
+
+    @property
+    def max_x(self):
+        return max([p.x for p in self.points])
