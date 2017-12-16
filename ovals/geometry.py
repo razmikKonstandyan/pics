@@ -72,7 +72,7 @@ class Oval(object):
     def derivative(self, a1, a2, c1, c2):
         return (a1.y + a2.y - c1.y - c2.y) / (a1.x + a2.x - c1.x - c2.x)
 
-    def get_tangent_line(self, point, left_power=0, right_power=0, down_power=0, up_power=0, step=0.01):
+    def get_tangent_line(self, point, left_power=1.0, right_power=1.0, down_power=1.0, up_power=1.0, step=0.01):
         l1 = l2 = r1 = r2 = None
         for i, p in enumerate(self.points):
             if p == point:
@@ -83,10 +83,13 @@ class Oval(object):
             raise Exception('Point %s was not found!', point)
         k = self.derivative(l1, l2, r1, r2)
         b = point.y - point.x * k
-        left_x = self.min_x - self.min_x * left_power
-        right_x = self.max_x + self.max_x * right_power
-        down_y = self.min_y - self.min_y * down_power
-        up_y = self.max_y + self.max_y * up_power
+        left_x = self.min_x * left_power
+        right_x = self.max_x * right_power
+        print self.min_x, self.max_x
+        print left_x, right_x
+        down_y = self.min_y * down_power
+        up_y = self.max_y * up_power
+        print down_y, up_y
         return Line(k, b, left_x, right_x, down_y, up_y, step)
 
     # Remove this shit soon
@@ -110,3 +113,25 @@ class Oval(object):
     @property
     def max_y(self):
         return max([p.y for p in self.points])
+
+
+# from math_calculations import get_lines_intersection_point
+a = 2
+b = 4
+power = 1.3
+oval = Oval(a, b, power)
+oval.projective_transform(10, 12, 3, 10, 4, 12, 6, 2)
+L = oval.points[-253]
+R = oval.points[-2393]
+A = oval.points[3300]
+T = oval.points[2600]
+
+LA = oval.form_line_by_two_points(L, A)
+LT = oval.form_line_by_two_points(L, T)
+RA = oval.form_line_by_two_points(R, A)
+RT = oval.form_line_by_two_points(R, T)
+# RA_LT = get_lines_intersection_point(RA, LT)
+
+L_tangent = oval.get_tangent_line(L, down_power=2., up_power=2.0, left_power=3.0, right_power=3.0)
+print L_tangent.points
+# print L_tangent.points
