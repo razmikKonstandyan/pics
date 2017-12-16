@@ -13,14 +13,19 @@ class Point(object):
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
+    def __str__(self):
+        return '(%s, %s)' % (self.x, self.y)
+
 
 class Line(object):
 
-    def __init__(self, k, b, left_x, right_x, step=0.01):
+    def __init__(self, k, b, left_x=-1, right_x=1, down_y=-1, up_y=1, step=0.1):
         self.k = k
         self.b = b
         self.left_x = left_x
         self.right_x = right_x
+        self.down_y = down_y
+        self.up_y = up_y
         self.step = step
 
     @property
@@ -28,8 +33,13 @@ class Line(object):
         result = []
         for x in np.arange(self.left_x, self.right_x, self.step):
             y = self.k * x + self.b
-            result.append(Point(x, y))
+            # window for y coordinate
+            if self.up_y > y > self.down_y:
+                result.append(Point(x, y))
         return result
+
+    def __str__(self):
+        return 'y = %s * x + %s' % (self.k, self.b)
 
 
 class Ellipse(object):
@@ -79,7 +89,7 @@ class Oval(Ellipse):
     def derivative(self, a1, a2, c1, c2):
         return (a1.y + a2.y - c1.y - c2.y) / (a1.x + a2.x - c1.x - c2.x)
 
-    def get_tangent_points(self, point, left_power=0, right_power=0):
+    def get_tangent_line(self, point, left_power=0, right_power=0, down_power=0, up_power=0, step=0.01):
         l1 = l2 = r1 = r2 = None
         for i, p in enumerate(self.points):
             if p == point:
@@ -92,7 +102,9 @@ class Oval(Ellipse):
         b = point.y - point.x * k
         left_x = self.min_x - self.min_x * left_power
         right_x = self.max_x + self.max_x * right_power
-        return Line(k, b, left_x, right_x).points
+        down_y = self.min_y - self.min_y * down_power
+        up_y = self.max_y + self.max_y * up_power
+        return Line(k, b, left_x, right_x, down_y, up_y, step)
 
     @property
     def min_x(self):
@@ -101,3 +113,11 @@ class Oval(Ellipse):
     @property
     def max_x(self):
         return max([p.x for p in self.points])
+
+    @property
+    def min_y(self):
+        return min([p.y for p in self.points])
+
+    @property
+    def max_y(self):
+        return max([p.y for p in self.points])
