@@ -47,24 +47,16 @@ class Ellipse(object):
     def __init__(self, a, b):
         self.a = a
         self.b = b
-
-    @property
-    def points(self):
-        points = [Point(0.0, 0.0)]
-        for t in np.arange(0, 2 * 3.14, 0.001):
-            x = self.a * cos(t)
-            y = self.b * sin(t)
-            points.append(Point(x, y))
-        return points
+        self.points = [Point(a * cos(t), b * sin(t)) for t in np.arange(0, 2 * 3.14, 0.001)]
 
 
-class Oval(Ellipse):
+class Oval(object):
 
     def __init__(self, a, b, power, offset_x=1, offset_y=1):
-        super(Oval, self).__init__(a, b)
         self.power = power
         self.offset_x = offset_x
         self.offset_y = offset_y
+        self.points = [Point((p.x + a + offset_x) ** power, p.y) for p in Ellipse(a, b).points]
 
     def projective_transform(self, a0, a1, a2, b0, b1, b2, d1, d2):
         transformed_points = []
@@ -75,16 +67,7 @@ class Oval(Ellipse):
             x_transformed = first_numerator / divider
             y_transformed = second_numerator / divider
             transformed_points.append(Point(x_transformed, y_transformed))
-        return transformed_points
-
-    @property
-    def points(self):
-        power_points = []
-        for p in super(Oval, self).points:
-            x = (p.x + self.a + self.offset_x) ** self.power
-            y = (p.y + self.b + self.offset_y) ** self.power
-            power_points.append(Point(x, y))
-        return power_points
+        self.points = transformed_points
 
     def derivative(self, a1, a2, c1, c2):
         return (a1.y + a2.y - c1.y - c2.y) / (a1.x + a2.x - c1.x - c2.x)
@@ -105,6 +88,12 @@ class Oval(Ellipse):
         down_y = self.min_y - self.min_y * down_power
         up_y = self.max_y + self.max_y * up_power
         return Line(k, b, left_x, right_x, down_y, up_y, step)
+
+    # Remove this shit soon
+    def form_line_by_two_points(self, first_point, second_point, **kwargs):
+        a = np.array([[first_point.x, 1], [second_point.x, 1]])
+        b = np.array([first_point.y, second_point.y])
+        return Line(*np.linalg.solve(a, b), **kwargs)
 
     @property
     def min_x(self):
